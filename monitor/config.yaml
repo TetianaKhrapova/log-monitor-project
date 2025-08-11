@@ -1,0 +1,17 @@
+log_path: /var/log/sample_app/app.log
+keywords:
+  - ERROR
+  - CRITICAL
+alerts:
+  slack_webhook: "https://hooks.slack.com/services/XXX/YYY/ZZZ" # put your webhook
+  telegram:
+  token: "123456:ABC-DEF"
+  chat_id: "987654321"
+smtp:
+  host: "smtp.example.com"
+  port: 587
+  starttls: true
+  user: "user"
+  pass: "pass"
+  from: "noreply@example.com"
+  to: "oncall@example.com"

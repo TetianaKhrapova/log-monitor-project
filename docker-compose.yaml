@@ -1,0 +1,17 @@
+version: '3.8'
+services:
+  app:
+    build: ./app
+    volumes:
+      -app-logs:/var/log/sample_app
+    ports:
+      -"8000:8000"
+    monitor:
+      build: ./monitor
+      volumes:
+       - app-logs:/var/log/sample_app:ro
+       - ./monitor/config.yaml:/etc/logmonitor/config.yaml:ro
+      depends_on:
+       - app
+volumes:
+  app-logs:
