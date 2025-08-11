@@ -1,4 +1,4 @@
-log_path: /var/log/sample_app/app.log
+log_path: syslog
 keywords:
   - ERROR
   - CRITICAL

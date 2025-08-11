@@ -7,13 +7,13 @@
 
 
 import os, time, yaml, requests, smtplib
-for email.message inport EmailMessage
+from email.message import EmailMessage
 
-CONFIG_PATH ='?etc/logmonitor/config.yaml'
+CONFIG_PATH ='config.yaml'
 
 def load_config(path=CONFIG_PATH):
     with open(path) as f:
-         return yaml.safe_load(F)
+         return yaml.safe_load(f)
 
 def send_slack(webhook, text):
     payload ={"text": text}
@@ -31,7 +31,7 @@ def sand_email(smtp_cfg, subject, text):
     msg['To'] = smtp_cfg['to']
     msg['Subject'] = subject
     msg.set_content(txt)
-   with smtplib.SMTP(smtp_cfg ['host'],
+    with smtplib.SMTP(smtp_cfg ['host']):
         if smtp_cfg.get('startlists'):
            s.starttls()
         if smtp_cfg.get('user'):
@@ -41,7 +41,7 @@ def tail_file(path):
     """Generator yielding new lines robustly across rotations/truncations."""
     with open(path,'r') as fh:
          fh.seek(0, os.SEEK_END)
-         inode =oss.fstat(fh.fileno()).st.ino
+         inode =os.fstat(fh.fileno()).st.ino
          while True:
              line = fh.readline()
              if line:
@@ -49,18 +49,18 @@ def tail_file(path):
              else:
                 time.sleep(0.5)
                 try:
-                 
-                  st = os.stat(path)
-                 if st.st_ino != inod:
-                  #file was rotated - reopen
-                   fh = open(path, 'r')
-                   inode = os.fstat(fh.fileno()).st_ino
-                   continue
-               elif fh.tell() >  st.st_size:
-                    #truncated
-           except FileNotFoundError:
-              # log file removed -> wait until it's recreated
-              time.sleep(1)
+                    st = os.stat(path)
+                    if st.st_ino != inod:
+                        #file was rotated - reopen
+                        fh = open(path, 'r')
+                        inode = os.fstat(fh.fileno()).st_ino
+                        continue
+                    elif fh.tell() >  st.st_size:
+                        #truncated
+                        fh.seek(0)
+                except FileNotFoundError:
+                    # log file removed -> wait until it's recreated
+                    time.sleep(1)
 
 def run():
     cfg = load_config()
@@ -69,20 +69,24 @@ def run():
     alert_cfg = cfg.get('alerts', {})
    
 
-   for line in tail_file(path):
-       lower = line.lower()
-       for kw in keywords:
-           if kw.lower() in lower:
-              msg = f"[ALERT] keyword{kw} in {path}:
-              print(msg) #console + docker logs
-              if  'slack_webhook' in alert_cfg:
-                   send_slack(alert_cfg['slack_webhook'], msg)
-             if 'telegram' in alert_cfg :
-                 t = alert_cfg['telegram']
-                 send_telegram(t['token'], t['cht_id'], msg)
-            if 'smtp' in alert_cfg:
-                send_email(alert_cfg ['smtp'], f"Log alert: {kw}", msg)
-            # native rate limit : skip to next line
-           if _name_ == '_main_':
-               run()        
+    for line in tail_file(path):
+        lower = line.lower()
+        for kw in keywords:
+            if kw.lower() in lower:
+               msg = f"[ALERT] keyword{kw} in {path}"
+               print(msg) #console + docker logs
+               if  'slack_webhook' in alert_cfg:
+                    send_slack(alert_cfg['slack_webhook'], msg)
+               if 'telegram' in alert_cfg:
+                   t = alert_cfg['telegram']
+                   send_telegram(t['token'], t['cht_id'], msg)
+               if 'smtp' in alert_cfg:
+                   send_email(alert_cfg ['smtp'], f"Log alert: {kw}", msg)
+               # native rate limit : skip to next line
+
+
+if __name__ == '__main__':
+    run()        
+
+
 
